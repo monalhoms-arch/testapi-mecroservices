@@ -178,8 +178,21 @@ export default function WhatsAppTab() {
           </div>
           <div className="form-group">
             <label className="input-label">رقم الهاتف (مع رمز الدولة)</label>
-            <input className="input-field" placeholder="2137XXXXXXXX"
-              value={phone} onChange={e => setPhone(e.target.value)} />
+            <div style={{ display: 'flex', gap: 10 }}>
+              <input className="input-field" placeholder="2137XXXXXXXX"
+                value={phone} onChange={e => setPhone(e.target.value)} />
+              <button 
+                className="btn btn-whatsapp btn-sm" 
+                onClick={() => {
+                  const clean = phone.replace(/\D/g, '');
+                  if (clean) window.open(`https://wa.me/${clean}`, '_blank');
+                  else showToast('أدخل رقم هاتف صحيح أولاً', 'error');
+                }}
+                title="فتح في واتساب"
+              >
+                💬
+              </button>
+            </div>
           </div>
           <div className="form-group">
             <label className="input-label">نوع الحساب</label>
