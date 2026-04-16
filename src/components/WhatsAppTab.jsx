@@ -1,7 +1,7 @@
 import { useState, useContext, useEffect } from 'react'
 import { ToastContext } from '../App'
 
-const BASE = 'http://127.0.0.1:8000'
+const BASE = 'http://localhost:8000'
 const DEFAULT_KEY = 'my_super_secret_key_123'
 
 export default function WhatsAppTab() {
@@ -15,6 +15,7 @@ export default function WhatsAppTab() {
   const [phone, setPhone] = useState('')
   const [accountType, setAccountType] = useState('customer')
   const [name, setName] = useState('')
+  const [isBusiness, setIsBusiness] = useState(false)
   
   // OTP States
   const [otpCode, setOtpCode] = useState('')
@@ -23,6 +24,7 @@ export default function WhatsAppTab() {
 
   // Notification States
   const [message, setMessage] = useState('')
+  const [directMode, setDirectMode] = useState(false)
   const [notifLoading, setNotifLoading] = useState(false)
 
   // Response UI
@@ -66,7 +68,7 @@ export default function WhatsAppTab() {
     try {
       await apiFetch('/accounts/', {
         method: 'POST',
-        body: JSON.stringify({ phone_number: phone, account_type: accountType, name, is_business_whatsapp: false })
+        body: JSON.stringify({ phone_number: phone, account_type: accountType, name, is_business_whatsapp: isBusiness })
       })
       showToast('تم تسجيل الحساب بنجاح', 'success')
     } catch {}
@@ -100,11 +102,16 @@ export default function WhatsAppTab() {
     if (!phone || !message) return showToast('أدخل الهاتف والرسالة', 'error')
     setNotifLoading(true)
     try {
-      await apiFetch('/notifications/send', {
+      const endpoint = directMode ? '/notifications/direct' : '/notifications/send'
+      const body = directMode 
+        ? { phone_number: phone, message, is_business: isBusiness }
+        : { phone_number: phone, message, account_type: accountType }
+
+      await apiFetch(endpoint, {
         method: 'POST',
-        body: JSON.stringify({ phone_number: phone, message, account_type: accountType })
+        body: JSON.stringify(body)
       })
-      showToast('تم وضع الرسالة في قائمة الانتظار', 'success')
+      showToast(directMode ? 'تم إرسال الرسالة المباشرة' : 'تم وضع الإشعار في الانتظار', 'success')
     } catch {} finally { setNotifLoading(false) }
   }
 
@@ -187,6 +194,15 @@ export default function WhatsAppTab() {
             <input className="input-field" placeholder="محمد أمين"
               value={name} onChange={e => setName(e.target.value)} />
           </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '10px 0' }}>
+            <input 
+              type="checkbox" 
+              checked={isBusiness} 
+              onChange={e => setIsBusiness(e.target.checked)}
+              id="isBusinessCheck"
+            />
+            <label htmlFor="isBusinessCheck" style={{ fontSize: 13, cursor: 'pointer' }}>حساب أعمال (Business WhatsApp)</label>
+          </div>
           <button className="btn btn-ghost btn-sm" onClick={registerAccount} style={{ width: '100%', marginTop: 8 }}>
             ➕ تسجيل الحساب في القاعدة
           </button>
@@ -228,22 +244,31 @@ export default function WhatsAppTab() {
       <div className="glass-card section-card">
         <div className="section-card-header">
           <span className="section-title">🔔 محرك الإشعارات (Background)</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <input 
+              type="checkbox" 
+              checked={directMode} 
+              onChange={e => setDirectMode(e.target.checked)}
+              id="directModeCheck"
+            />
+            <label htmlFor="directModeCheck" style={{ fontSize: 13, cursor: 'pointer', color: 'var(--text-secondary)' }}>رسالة مباشرة 🔗</label>
+          </div>
         </div>
         <div className="form-group">
           <label className="input-label">الرسالة المطلوبة</label>
           <textarea 
             className="input-field" 
             rows={3} 
-            placeholder="اكتب رسالتك هنا..."
+            placeholder={directMode ? "اكتب رسالتك المباشرة هنا..." : "اكتب رسالتك هنا..."}
             value={message}
             onChange={e => setMessage(e.target.value)}
           />
         </div>
         <button className="btn btn-pdf" onClick={sendNotification} disabled={notifLoading} style={{ width: '100%' }}>
-          {notifLoading ? <span className="spinner" /> : '🚀 إرسال إشعار فوري'}
+          {notifLoading ? <span className="spinner" /> : (directMode ? '🚀 إرسال رسالة مباشرة' : '🚀 إرسال إشعار فوري')}
         </button>
         <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 10, textAlign: 'center' }}>
-          * سيتم إرسال الرسالة في الخلفية (Background Task) لضمان سرعة الاستجابة.
+          * {directMode ? 'سيتم إرسال الرسالة كما هي بدون أي بادئات تلقائية.' : 'سيتم إضافة بادئة تلقائية بناءً على نوع الحساب.'}
         </p>
       </div>
 

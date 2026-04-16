@@ -1,7 +1,7 @@
 import { useState, useContext } from 'react'
 import { ToastContext } from '../App'
 
-const BASE = 'http://127.0.0.1:8002'
+const BASE = 'http://localhost:8002'
 
 const emptyItem = () => ({ description: '', price: '', quantity: 1 })
 

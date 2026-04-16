@@ -1,7 +1,7 @@
 import { useState, useContext } from 'react'
 import { ToastContext } from '../App'
 
-const BASE = 'http://127.0.0.1:8001'
+const BASE = 'http://localhost:8001'
 
 const MAP_PLATFORMS = [
   { key: 'google_maps',     label: 'Google Maps',      icon: '🗺️' },
